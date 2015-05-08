@@ -18,13 +18,12 @@ var server = http.createServer(function(request, response){
 
 });
 
-var server2 = http.createServer(function(request, response){
-    response.statusCode = 200;
-    response.end("Hello world");
-});
+var server_port = process.env.OPENSHIFT_NODEJS_PORT || 8080;
+var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 
-server.listen(1234);
-server2.listen(8080);
+server.listen(server_port, server_ip_address, function () {
+    console.log( "Listening on: " + server_ip_address + ":" + server_port )
+});
 
 function getData(str, pageIndex, partySize, date, time, from, size, response) {
      var urlEndpoint = "http://www.opentable.com/s/api?datetime=" + date + "%20" + time + "&covers=" + partySize + "&metroid=4&regionids=5&showmap=false&sort=Name&size=" + size+ "&excludefields=Description&from=" + from + "&PageType=0";
