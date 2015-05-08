@@ -21,7 +21,7 @@ var server = http.createServer(function(request, response){
 var server2 = http.createServer(function(request, response){
     response.statusCode = 200;
     response.end("Hello world");
-}); 
+});
 
 server.listen(1234);
 server2.listen(80);
