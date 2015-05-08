@@ -24,7 +24,7 @@ var server2 = http.createServer(function(request, response){
 });
 
 server.listen(1234);
-server2.listen(80);
+server2.listen(8080);
 
 function getData(str, pageIndex, partySize, date, time, from, size, response) {
      var urlEndpoint = "http://www.opentable.com/s/api?datetime=" + date + "%20" + time + "&covers=" + partySize + "&metroid=4&regionids=5&showmap=false&sort=Name&size=" + size+ "&excludefields=Description&from=" + from + "&PageType=0";
