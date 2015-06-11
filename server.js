@@ -181,7 +181,8 @@ function centerMap(fullObj, metroId,response, from, size){
                 fullObj = jsonObj;
             }else{
                 for (var i in jsonObj.Results.Restaurants){
-                    fullObj.Results.Restaurants.push(i);
+                    console.log(i);
+                    fullObj.Results.Restaurants.push(jsonObj.Results.Restaurants[i]);
                 }
             }
             if (jsonObj.Results.TotalAvailable > (from + size)) {
@@ -218,7 +219,7 @@ function getData(fullObj, pageIndex, partySize, date, time, metroId, from, size,
                      fullObj = jsonObj;
                  }else{
                      for (var i in jsonObj.Results.Restaurants){
-                         fullObj.Results.Restaurants.push(i);
+                         fullObj.Results.Restaurants.push(jsonObj.Results.Restaurants[i]);
                      }
                  }
                  from = from+size;
