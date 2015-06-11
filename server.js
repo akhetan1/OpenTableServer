@@ -16,16 +16,16 @@ var server = http.createServer(function(request, response) {
         var time = url_parts.query.time;
         var metroId = url_parts.query.metroId;
         var pageIndex = 0;
-        var str = [];
         var from = 0;
         var size = 3000;
 
-        getData(str, pageIndex, partySize, date, time, metroId, from, size, response);
+        getData(null, pageIndex, partySize, date, time, metroId, from, size, response);
     }
     else if(url_parts.pathname == '/centerMap') {
+        var from = 0;
+        var size = 3000;
         var metroId = url_parts.query.metroId;
-        var str = [];
-        centerMap(str, metroId,response);
+        centerMap(null, metroId,response, from, size);
     }
 
     //send the contents of a list to the client
@@ -96,6 +96,7 @@ var server_ip_address = process.env.OPENSHIFT_NODEJS_IP || '127.0.0.1';
 server.listen(server_port, server_ip_address, function () {
     console.log( "Listening on: " + server_ip_address + ":" + server_port )
 });
+
 /*server.listen(1234,function(){
     console.log("Listening on 1234;");
 });*/
@@ -160,25 +161,38 @@ function addRestaurant(listName,restaurantName, response){
         if (err) throw err;
         console.log("Restaurant added");
     });
-    response.statusCode = 200;
     response.setHeader("Content-Type", "text/json");
     response.setHeader("Access-Control-Allow-Origin", "*");
+    response.statusCode = 200;
     response.end();
 }
 
-function centerMap(str, metroId,response){
-    var urlEndpoint = "http://www.opentable.com/s/api?metroid=" + metroId+"&from=0&size=3000";
+function centerMap(fullObj, metroId,response, from, size){
+    var urlEndpoint = "http://www.opentable.com/s/api?metroid=" + metroId+"&from="+from+ "&size="+size;
     var tempStr = "";
     http.get(urlEndpoint, function(openTableResponse) {
         openTableResponse.on('data', function (chunk) {
             tempStr += chunk;
         });
         openTableResponse.on('end', function () {
-            str.push(JSON.parse(tempStr));
-            response.statusCode = 200;
-            response.setHeader("Content-Type", "text/json");
-            response.setHeader("Access-Control-Allow-Origin", "*");
-            response.end(JSON.stringify(str));
+            var jsonObj = JSON.parse(tempStr);
+            console.log("Total available: " + jsonObj.Results.TotalAvailable + " from: " + from + " size: " +size );
+            if (from == 0) {
+                fullObj = jsonObj;
+            }else{
+                for (var i in jsonObj.Results.Restaurants){
+                    fullObj.Results.Restaurants.push(i);
+                }
+            }
+            if (jsonObj.Results.TotalAvailable > (from + size)) {
+                from = from + size;
+                centerMap(fullObj, metroId, response, from, size);
+            }else{
+                response.setHeader("Content-Type", "text/json");
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.statusCode = 200;
+                response.end(JSON.stringify(fullObj));
+            }
         });
     }).on('error', function (e) {
         response.statusCode = 500;
@@ -186,7 +200,7 @@ function centerMap(str, metroId,response){
     })
 }
 
-function getData(str, pageIndex, partySize, date, time, metroId, from, size, response) {
+function getData(fullObj, pageIndex, partySize, date, time, metroId, from, size, response) {
      var urlEndpoint = "http://www.opentable.com/s/api?datetime=" + date + "%20" + time + "&covers=" + partySize + "&metroid=" + metroId + "&showmap=false&sort=Name&size=" + size+ "&excludefields=Description&from=" + from + "&PageType=0";
      console.log(urlEndpoint);
 
@@ -198,16 +212,30 @@ function getData(str, pageIndex, partySize, date, time, metroId, from, size, res
          openTableResponse.on('end', function(){
              var jsonObj = JSON.parse(tempStr);
              if(jsonObj.Results.TotalAvailable == 0){
-                 str.push("No search results");
+                 fullObj = {"message": "No search results"};
              } else if (jsonObj.Results.TotalAvailable > (from+size)){
+                 if (from == 0) {
+                     fullObj = jsonObj;
+                 }else{
+                     for (var i in jsonObj.Results.Restaurants){
+                         fullObj.Results.Restaurants.push(i);
+                     }
+                 }
                  from = from+size;
-                 getData(str, pageIndex, partySize, date, time, from, size, response);
+                 getData(fullObj, pageIndex, partySize, date, time,metroId, from, size, response);
+             } else {
+                 if (from == 0) {
+                     fullObj = jsonObj;
+                 }else{
+                     for (var i in jsonObj.Results.Restaurants){
+                         fullObj.Results.Restaurants.push(i);
+                     }
+                 }
+                 response.setHeader("Content-Type", "text/json");
+                 response.setHeader("Access-Control-Allow-Origin", "*");
+                 response.statusCode = 200;
+                 response.end(JSON.stringify(fullObj));
              }
-             str.push(JSON.parse(tempStr));
-             response.statusCode = 200;
-             response.setHeader("Content-Type", "text/json");
-             response.setHeader("Access-Control-Allow-Origin", "*");
-             response.end(JSON.stringify(str));
 
          });
      }).on('error', function (e) {
