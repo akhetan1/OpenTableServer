@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var fs = require('fs');
 var queryString = require("querystring");
@@ -13,17 +14,17 @@ var server = http.createServer(function(request, response) {
     if(url_parts.pathname == '/reservations'){
         var partySize = url_parts.query.partySize;
         var date = url_parts.query.date;
-        var time = url_parts.query.time;
+        var time = encodeURIComponent(url_parts.query.time);
         var metroId = url_parts.query.metroId;
         var pageIndex = 0;
         var from = 0;
-        var size = 3000;
+        var size = 100;
 
         getData(null, pageIndex, partySize, date, time, metroId, from, size, response);
     }
     else if(url_parts.pathname == '/centerMap') {
         var from = 0;
-        var size = 3000;
+        var size = 100;
         var metroId = url_parts.query.metroId;
         centerMap(null, metroId,response, from, size);
     }
@@ -168,9 +169,9 @@ function addRestaurant(listName,restaurantName, response){
 }
 
 function centerMap(fullObj, metroId,response, from, size){
-    var urlEndpoint = "http://www.opentable.com/s/api?metroid=" + metroId+"&from="+from+ "&size="+size;
+    var urlEndpoint = "https://www.opentable.com/s/node/api?metroid=" + metroId+"&from="+from+ "&size="+size;
     var tempStr = "";
-    http.get(urlEndpoint, function(openTableResponse) {
+    https.get(urlEndpoint, function(openTableResponse) {
         openTableResponse.on('data', function (chunk) {
             tempStr += chunk;
         });
@@ -202,11 +203,11 @@ function centerMap(fullObj, metroId,response, from, size){
 }
 
 function getData(fullObj, pageIndex, partySize, date, time, metroId, from, size, response) {
-     var urlEndpoint = "http://www.opentable.com/s/api?datetime=" + date + "%20" + time + "&covers=" + partySize + "&metroid=" + metroId + "&showmap=false&sort=Name&size=" + size+ "&excludefields=Description&from=" + from + "&PageType=0";
+     var urlEndpoint = "https://www.opentable.com/s/node/api?datetime=" + date + "+" + time + "&covers=" + partySize + "&metroid=" + metroId + "&showmap=false&sort=Name&size=" + size+ "&excludefields=Description&from=" + from + "&PageType=0";
      console.log(urlEndpoint);
 
      var tempStr = "";
-     http.get(urlEndpoint, function(openTableResponse){
+     https.get(urlEndpoint, function(openTableResponse){
          openTableResponse.on('data', function(chunk) {
              tempStr += chunk;
          });
